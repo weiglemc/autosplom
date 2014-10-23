@@ -1,0 +1,66 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>Auto SPLOM</title>
+  <link rel="stylesheet" href="css/autosplom.css" type="text/css" media="screen" title="no title" charset="utf-8">
+  <script src="js/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/CSVParser.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/DataDescriber.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/converter.js" type="text/javascript" charset="utf-8"></script>
+  <script src="js/Controller.js" type="text/javascript"
+charset="utf-8"></script>
+
+<script type="text/javascript" src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript" src="js/splom-d3.js"></script>
+
+</head>
+<body>
+  <div id='base'>
+    <div id='header'>
+      <div id="description">
+        <h1>Auto SPLOM</h1>
+        <p>Take a data file and generate scatterplot matrix (SPLOM)</p>
+        <p>Based on Shan Carter's <a href="http://shancarter.github.io/Mr-Data-Converter">Mr. Data Converter</a> and 
+        Mike Bostock's <a href="http://bl.ocks.org/mbostock/3213173">d3 SPLOM example</a>.</p>
+      </div>
+      <div id='settings'>
+        <h3>Settings</h3>
+        <form id='settingsForm'>
+           <p>Delimiter:
+             <label><input class="settingsElement" type="radio" name="delimiter" id='delimiterAuto'   value="auto" checked/> Auto</label>
+             <label><input class="settingsElement" type="radio" name="delimiter" id='delimiterComma'  value="comma" /> Comma</label>
+             <label><input class="settingsElement" type="radio" name="delimiter" id='delimiterTab'    value="tab" /> Tab</label>
+            </p>
+          <p>Decimal Sign:
+             <label><input class="settingsElement" type="radio" name="decimal" id='decimalDot'   value="dot" checked/> Dot</label>
+             <label><input class="settingsElement" type="radio" name="decimal" id='decimalComma'  value="comma" /> Comma</label>
+            </p>
+          <p><label><input class="settingsElement" type="checkbox" name="" value="" id="headersProvidedCB" checked /> First row is the header</label></p>
+          <div class="settingsGroup">
+            <p>Transform: <label><input class="settingsElement" type="radio" name="headerModifications" value="downcase" id='headersDowncase' /> downcase</label>
+            <label><input class="settingsElement" type="radio" name="headerModifications" id='headersUpcase' value="upcase" /> upcase</label>
+            <label><input class="settingsElement" type="radio" name="headerModifications" id='headersNoTransform' value="none" checked /> none</label></p>
+          </div>
+          <div>
+	    <br/>
+          <p><input class="settingsElement" type="button" value="Generate SPLOM" onclick="genSPLOM();" /></p>
+          </div>
+        </form>
+      </div>
+    </div>
+
+   <div id='datadescrip'>
+   </div>
+
+    <div id='converter' class=''>
+
+    </div>
+
+  </div>
+
+
+</body>
+</html>
