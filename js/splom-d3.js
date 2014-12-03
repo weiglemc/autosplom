@@ -28,7 +28,7 @@ function genSPLOM(data)
 
     var color = d3.scale.category10();
 
-    var n = 4;   // set the number of dimensions statically for now
+    var n = 5;   // set the number of dimensions statically for now
 
     xAxis.tickSize(size * n);
     yAxis.tickSize(-size * n);
@@ -50,7 +50,7 @@ function genSPLOM(data)
 // hack for testing data
 	dims = d3.keys(data[0]).filter(function (d) {
 	    return (d === "Retail Price" || d === "Weight" || 
-		    d === "City MPG" || d === "HP");});
+		    d === "City MPG" || d === "HP" || d === "Hwy MPG");});
 	n = dims.length;
 
 console.log ("dims: " + dims);
@@ -81,8 +81,18 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 console.log("mydata:");
 console.dir(mydata);
 
-// find grouping column - categorical in mydata[0] and !key in mydata[1]
-// need to look at keys or something?
+    // find grouping column - categorical in mydata[0] and !key in mydata[1]
+    var categorical = d3.set();
+    for (var prop in mydata[0]) {
+	// add categorical types to set
+	if (mydata[0][prop] === "categorical") {categorical.add(prop);}
+    }
+    for (var prop in mydata[1]) {
+	// remove any that are listed as key
+	if (categorical.has(prop) && mydata[1][prop] == "key") {categorical.remove(prop);}
+    }
+    var grouping = categorical.values()[0];   // grab the 1st one
+    console.log ("grouping: " + grouping);
 
     var cell = svg.selectAll(".cell")
 	    .data(cross(dims, dims))
@@ -104,6 +114,14 @@ console.dir(mydata);
 	
 	x.domain(domainByDim[p.x]);
 	y.domain(domainByDim[p.y]);
+
+	var tooltip = d3.select("body")
+	      .append("div")
+	      .style("font-size", "10pt")
+	      .style("background-color", "white")
+	      .style("position", "absolute")
+              .style("z-index", "10")
+              .style("visibility", "hidden");
 	
 	cell.append("rect")
             .attr("class", "frame")
@@ -118,11 +136,18 @@ console.dir(mydata);
             .attr("cx", function(d) { return x(d[p.x]); })
             .attr("cy", function(d) { return y(d[p.y]); })
             .attr("r", 3)
-// ADD - on hover to show data
 //            .style("fill", "black");
-	// this is known, but we'll need to determine it dynamically
-	// it's the categorical column that's not a key
-            .style("fill", function(d) { return color(d.Manufacturer); });
+            .style("fill", function(d) { return color(d[grouping]); })
+	    .on ("mouseover", function () {return tooltip.style("visibility", "visible");})
+	    .on ("mousemove", function (d) {
+		var name = d["Vehicle Name"];
+		var tip = name + " " + p.x + ": " + d[p.x] + " " + p.y +
+			": " + d[p.y];
+		return tooltip.style("top", (d3.event.pageY-10)+"px")
+		    .style("left", (d3.event.pageX+10)+"px")
+		    .text(tip);
+	    })
+	    .on ("mouseout", function () {return tooltip.style("visibility", "hidden");});
     }
 
     function cross(a, b) {
