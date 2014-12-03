@@ -90,20 +90,24 @@ p {
 }
 
 /* data description (want it to be below the settings panel) */
-#datadescrip {}
+#datadescrip {
+    position: absolute;
+    top: 350px;
+    width: 275px;
+}
 
 #datadescrip textarea {
-	font-family: monospace;
-  	font-size: 10px;
-  	color: black;
-	border-color:#000000 #666666 #666666 #000000;
-	border-style:solid;
-	border-width:2px;
-	width: 275px;
+    font-family: monospace;
+    font-size: 10px;
+    color: black;
+    border-color:#000000 #666666 #666666 #000000;
+    border-style:solid;
+    border-width:2px;
+    width: 275px;
+    top: 30px;
 }
 
 /*converter*/
-
 #converter {
 	position: absolute;
 	top: 15px;
@@ -122,7 +126,7 @@ p.dataHeaders{
   color: black;
   font-family: monospace;
   font-size: 12px;
-  height: 300px;
+  height: 200px;
   line-height: 18px;
   padding: 10px;
   border-color:#000000 #666666 #666666 #000000;
@@ -133,7 +137,7 @@ p.dataHeaders{
 .groupHeader{
   width: 100%;
   color: #222;
-  background-color:  #5c7edf;
+  background-color: #9ecae1; /* #5c7edf;*/
   height: 45px;
   border-color:#000000 #666666 #666666 #000000;
   border-style:solid;
@@ -162,10 +166,20 @@ p.groupHeadline {
 	
 }
 
-#dataOutput {
-
-	
+.textOutputs {
+    background-color: #eee;
+    border: none;
+    color: black;
+    font-family: monospace;
+    font-size: 12px;
+    height: 500px;
+    line-height: 18px;
+    padding: 10px;
+    border-color:#000000 #666666 #666666 #000000;
+    border-style:solid;
+    border-width:2px;
 }
+
 #dataSelector {
 	width: 200px;
 	line-height: 22px;
@@ -177,9 +191,17 @@ p.groupHeadline {
 
 }
 
+/* splom */
+
+#splom {
+    position: absolute;
+    left: 350px;
+    top: 375px;  
+}
+
 svg {
   font: 10px sans-serif;
-  padding: 10px;
+  padding: 15px;
 }
 
 .axis,

@@ -11,49 +11,83 @@ function DataDescriber (dataGrid, headerNames, headerTypes) {
   var outputText = "";
   var numRows = dataGrid.length;
   var numColumns = headerNames.length;
-  var uniqueCol = {};
-  
-  outputText += "numItems: " + numRows + "\n";
-  outputText += "numDim: " + numColumns + "\n";
+  var keyRow = [];
+  var data = [];
+
+/*  
+console.log("dataGrid");
+console.dir(dataGrid);
+console.log("headerNames");
+console.dir(headerNames);
+console.log("headerTypes");
+console.dir(headerTypes);
+*/
 
   for (var j=0; j < numColumns; j++) {
-    // look at each dimension  
-    uniqueCol[j] = true;
-    var rowInd = 0;
-    while (uniqueCol[j] == true && rowInd < (numRows-1)) {
-      // look at each item
-      for (var i=rowInd+1; i<numRows; i++) {
-        if (dataGrid[rowInd][j] == dataGrid[i][j]) {
-          uniqueCol[j] = false; 
-          break;
-        }
+      // look at each dimension  
+      keyRow[j] = "unique";
+      var rowInd = 0;
+      while (keyRow[j] === "unique" && rowInd < (numRows-1)) {
+	  // look at each item
+	  for (var i=rowInd+1; i<numRows; i++) {
+              if (dataGrid[rowInd][j] == dataGrid[i][j]) {
+		  keyRow[j] = "no"; 
+		  break;
+              }
+	  }
+	  rowInd++;
       }
-      rowInd++;
-    }
+   
+      // look at each int dimension (binary or not)
+      if (headerTypes[j] === "int") {
+	  var binary = true;
+	  for (var i=rowInd+1; i<numRows; i++) {
+	      if (dataGrid[i][j] != 0 && dataGrid[i][j] != 1) {
+		  binary = false;
+	      }
+	  }
+	  if (binary && keyRow[j] !== "unique") {
+	      headerTypes[j] = "binary";
+	  }
+      }
   }
-  
-  outputText += "\n";
+
   for (var j=0; j < numColumns; j++) {
-    outputText += headerNames[j] + " : " + headerTypes[j];
-    if (headerTypes[j] == "string") { 
-      outputText += " - categorical";
-    } else if (headerTypes[j] == "float") { 
-      outputText += " - quantitative";
-    } else if (headerTypes[j] == "int") { 
-      outputText += " - ordinal";
-    }
-    
-    if (uniqueCol[j]) {
-      outputText += " - UNIQUE";
-      if (headerTypes[j] == "string") {
-        outputText += " - KEY";
+      if (keyRow[j] === "unique" && headerTypes[j] === "string") {
+	  keyRow[j] = "key";
       }
-    }
-    
-    outputText += "\n";
+
+      // replace (int, float, string) type with (categorical, quantitative, ordinal, binary)
+      if (headerTypes[j] === "string") {
+	  headerTypes[j] = "categorical";
+      } else if (headerTypes[j] === "float") {
+	  headerTypes[j] = "quantitative";
+      } else if (headerTypes[j] === "int") {
+	  headerTypes[j] = "ordinal";
+      }
   }
 
-  // need to get the info about UNIQUE and KEY into the dataGrid or another data structure
+//console.log ("keyRow:");
+//console.dir(keyRow);    
 
-  return outputText;
+//console.log ("headerTypes: " + headerTypes);
+
+    // assemble data
+    data.push(headerNames);
+    for (var j=0; j<numRows; j++) {
+	data.push(dataGrid[j]);
+    }
+    data.push(headerTypes);
+    data.push(keyRow);
+
+    // add header names and types to dataGrid
+//    dataGrid.push(headerNames);
+//    dataGrid.push(headerTypes);
+//    dataGrid.push(keyRow);
+
+console.log("data");
+console.dir(data);
+
+//    return dataGrid;
+    return data;
 }

@@ -57,13 +57,12 @@ DataConverter.prototype.create = function(w,h) {
   var self = this;
 
   // build HTML for description output
-  var descripHeaderText = '<br/><p class="settings">Data Description</p>';
+  var descripHeaderText = '<p class="settings">Data Description</p>';
   this.descripHeader = $(descripHeaderText);
   this.descrip.append(this.descripHeader);
-
-  this.descripTextArea = $('<textarea class="textInputs" id="datadescrip"></textarea>');
+  this.descripTextArea = $('<textarea class="textOutputs" id="datadescrip"></textarea>');
   this.descrip.append(this.descripTextArea);
-  this.descripTextArea.click(function(evt){this.select();});
+//  this.descripTextArea.click(function(evt){this.select();});
  
   //build HTML for converter
   this.inputHeader = $('<div class="groupHeader" id="inputHeader"><p class="groupHeadline">Input CSV or tab-delimited data. <span class="subhead"> Using Excel? Simply copy and paste. No data on hand? <a href="#" id="insertSample">Use sample</a></span></p></div>');
@@ -91,16 +90,18 @@ DataConverter.prototype.create = function(w,h) {
      });
 
   this.resize(w,h);
-}
+};
 
 DataConverter.prototype.resize = function(w,h) {
-
   var paneWidth = w;
-  var paneHeight = (h-90)/2-20;
+//  var paneHeight = ((h-90)/2)-20;
+    var paneHeight = ((h-90)/3);
 
   this.node.css({width:paneWidth});
   this.inputTextArea.css({width:paneWidth-20,height:paneHeight});
-}
+
+    $("#splom").css({top: paneHeight+75});
+};
 
 DataConverter.prototype.convert = function() {
 
@@ -127,13 +128,64 @@ DataConverter.prototype.convert = function() {
     var headerTypes = parseOutput.headerTypes;
     var errors = parseOutput.errors;
 
-    this.descripText = DataDescriber(dataGrid, headerNames, headerTypes);
-    this.descripTextArea.val(errors + this.descripText);
+// this.outputText = DataGridRenderer[this.outputDataType](dataGrid, headerNames, headerTypes, this.indent, this.newLine);
 
-      // splom-d3 will need the dataGrid, headerNames, headerTypes, and other info
+      dataGrid = DataDescriber(dataGrid, headerNames, headerTypes);
+
+      // print out results from new dataGrid from DataDescriber
+      this.descripText = "";
+
+      var numRows = dataGrid.length - 3; // headers, datatypes, key
+      var numColumns = headerNames.length;
+
+      var headerInd = 0;
+      var typeInd = numRows+1;
+      var keyInd = numRows+2;
+
+      // write out data
+      this.descripText += "numItems: " + numRows + "\n";
+      this.descripText += "numDim: " + numColumns + "\n";
+      for (var j=0; j<numColumns; j++) {
+	  var key = (dataGrid[keyInd][j]!=="no")? " - " + 
+		  dataGrid[keyInd][j]:"";
+	  this.descripText += j + ": " +  headerNames[j] + ": " + 
+	      dataGrid[typeInd][j] + key + "\n";
+      }
+      this.descripTextArea.val(errors + this.descripText);
+
+      // convert the dataGrid array to JSON-like format
+      // input: dataGrid[0] = [header names]
+      //        dataGrid[1] = [row 1 of data]
+      // output: [ {header1: row1/1, header2: row1/2}, 
+      //           {header1: row2/1, header2: row2/2}
+
+      var mydata = [];
+      for (var i=1; i<dataGrid.length; i++) {
+	  // rows
+	  var tempRow = {};
+	  for (var j=0; j<numColumns; j++) {
+	      // columns
+	      var header = dataGrid[0][j];
+	      if ((dataGrid[typeInd][j] === "ordinal" || 
+		  dataGrid[typeInd][j] === "quantitative") && 
+		 i<typeInd) {
+		  // make sure numbers are saved as numbers
+		  tempRow[header] = +dataGrid[i][j];
+	      } else {
+		  tempRow[header] = dataGrid[i][j];
+	      }
+	  }
+	  mydata.push(tempRow);
+      }
+
+//console.log("mydata");
+//console.dir(mydata);
+
+      // draw the graphs
+      genSPLOM(mydata);
 
   }; //end test for existence of input text
-}
+};
 
 
 DataConverter.prototype.insertSampleData = function() {
@@ -150,6 +202,6 @@ DataConverter.prototype.insertSampleData = function() {
   val += "Buick,Buick LeSabre Custom 4dr,1,0,0,0,0,0,0,0,26470,24282,3.8,6,205,20,29,3567,112,200,74\n";
   val += "Cadillac,Cadillac Seville SLS 4dr,1,0,0,0,0,0,0,0,47955,43841,4.6,8,275,18,26,3992,112,201,75\n";
  this.inputTextArea.val (val);
-}
+};
 
 

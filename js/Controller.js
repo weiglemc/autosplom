@@ -1,10 +1,15 @@
 var _gaq = _gaq || [];
+var d;
+
+function convert() {
+    d.convert();
+}
 
 $(document).ready(function(){
   var widthOffset = 355;
-  var heightOffset = 35
+  var heightOffset = 35;
 
-  var d = new DataConverter('converter', 'datadescrip');
+  d = new DataConverter('converter', 'datadescrip');
 
   var sidebar = $('#header');
 
@@ -40,7 +45,7 @@ $(document).ready(function(){
       if (indentType === "tabs") {
         d.indent = "\t";
       } else if (indentType === "spaces") {
-        d.indent = "  "
+        d.indent = "  ";
       }
     } else {
       $("input[name=indentType]").attr("disabled", "disabled");
@@ -76,5 +81,5 @@ $(document).ready(function(){
 
   updateSettings();
   
-})
+});
 
