@@ -209,6 +209,10 @@ svg {
   shape-rendering: crispEdges;
 }
 
+.axis text {
+    font-size: 10px;
+}
+
 .axis line {
   stroke: #ddd;
 }
