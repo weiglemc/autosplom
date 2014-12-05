@@ -14,15 +14,6 @@ function DataDescriber (dataGrid, headerNames, headerTypes) {
     var keyRow = [];
     var data = [];
 
-/*  
-console.log("dataGrid");
-console.dir(dataGrid);
-console.log("headerNames");
-console.dir(headerNames);
-console.log("headerTypes");
-console.dir(headerTypes);
-*/
-
     for (var j=0; j < numColumns; j++) {
       // look at each dimension  
       keyRow[j] = "unique";
@@ -66,17 +57,53 @@ console.dir(headerTypes);
 	  headerTypes[j] = "ordinal";
       }
     }
-    
-    // assemble data
-    data.push(headerNames);
-    for (var j=0; j<numRows; j++) {
-	data.push(dataGrid[j]);
-    }
-    data.push(headerTypes);
-    data.push(keyRow);
 
-console.log("DataDescriber> data:");
-console.dir(data);
+/*    
+console.log("dataGrid");
+console.dir(dataGrid);
+console.log("headerNames");
+console.dir(headerNames);
+console.log("headerTypes");
+console.dir(headerTypes);
+console.log("keyRow");
+console.dir(keyRow);
+*/
+
+    // convert the dataGrid array to JSON-like format
+    // INPUT: headerNames = [header names]
+    //        dataGrid = data
+    //        headerTypes = [header types]
+    //        keyRow = [key, unique info]
+    // OUTPUT: data = [ {header1: row1/1, header2: row1/2}, 
+    //           {header1: row2/1, header2: row2/2}
+    for (var i=0; i<dataGrid.length; i++) {
+	// rows
+	var tempRow = {};
+	for (var j=0; j<numColumns; j++) {
+	    // columns
+	    var header = headerNames[j];
+	    if ((headerTypes[j] === "ordinal" || 
+		 headerTypes[j] === "quantitative") && i<j) {
+		// make sure numbers are saved as numbers
+		tempRow[header] = +dataGrid[i][j];
+	    } else {
+		tempRow[header] = dataGrid[i][j];
+	    }
+	}
+	data.push(tempRow);
+    }
+    // add in metadata
+    var tempRow1 = {}, tempRow2 = {};
+    for (var j=0; j<numColumns; j++) {
+	var header = headerNames[j];
+	tempRow1[header] = headerTypes[j];
+	tempRow2[header] = keyRow[j];
+    }
+    data.push(tempRow1);
+    data.push(tempRow2);
+ 
+//console.log("data");
+//console.dir(data);
 
     return data;
 }

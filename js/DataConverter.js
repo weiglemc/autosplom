@@ -92,12 +92,11 @@ DataConverter.prototype.create = function(w,h) {
 };
 
 DataConverter.prototype.resize = function(w,h) {
-  var paneWidth = w;
-//  var paneHeight = ((h-90)/2)-20;
+    var paneWidth = w;
     var paneHeight = ((h-90)/3)-20;
 
-  this.node.css({width:paneWidth});
-  this.inputTextArea.css({width:paneWidth-20,height:paneHeight});
+    this.node.css({width:paneWidth});
+    this.inputTextArea.css({width:paneWidth-20,height:paneHeight});
 
     $("#splom").css({top: paneHeight+75});
 };
@@ -113,11 +112,9 @@ DataConverter.prototype.convert = function() {
 
     if (this.includeWhiteSpace) {
 	this.newLine = "\n";
-	// console.log("yes")
     } else {
 	this.indent = "";
 	this.newLine = "";
-	// console.log("no")
     }
     
     CSVParser.resetLog();
@@ -128,91 +125,43 @@ DataConverter.prototype.convert = function() {
     var headerTypes = parseOutput.headerTypes;
     var errors = parseOutput.errors;
 
-// this.outputText = DataGridRenderer[this.outputDataType](dataGrid, headerNames, headerTypes, this.indent, this.newLine);
+    var data = DataDescriber(dataGrid, headerNames, headerTypes);
 
-    dataGrid = DataDescriber(dataGrid, headerNames, headerTypes);
+    // remove datatype description rows from data
+    //    metadata[0] - key:value pairs for the data type (categorical, ...)
+    //    metadata[1] - key:value pairs for the uniqueness (unique, key, no)
+    var metadata = data.splice(-2,2);
+
+console.log("DataConverter> data:");
+console.dir(data);
+
+console.log("DataConverter> metadata:");
+console.dir(metadata);
 
 /*
  *  TODO: 
  *   1) Change this textarea to a panel checkbox selector that selects a default 
  *      maxDims to show, but then lets the user change those selections.
  *   2) Let user change the key and grouping dims.
- *   3) Let the user change the description?  For example, year can be categorical
+ *   3) Let the user change the data type?  For example, year can be categorical
  *      instead of ordinal
  */
 
-    // print out results from new dataGrid from DataDescriber
-    var numRows = dataGrid.length - 3; // headers, datatypes, key
-    var numColumns = headerNames.length;
-    var headerInd = 0;
-    var typeInd = numRows+1;
-    var keyInd = numRows+2;
+    var numRows = data.length;
+    var numColumns = d3.keys(data[0]).length;
 
     this.descripText = "";
     this.descripText += "Cols (dims): " + numColumns + "\t\t";
     this.descripText += "Rows: " + numRows + "\n";
-    for (var j=0; j<numColumns; j++) {
-	var key = (dataGrid[keyInd][j]!=="no")? " - " + 
-		dataGrid[keyInd][j]:"";
-	if (j+1 < 10) {this.descripText += " ";}
-	this.descripText += (j+1) + ") " +  headerNames[j] + ": " + 
-	    dataGrid[typeInd][j] + key + "\n";
+    for (var i=0; i<numColumns; i++) {
+	var header = headerNames[i];
+	var key = (metadata[1][header]!=="no")? " - " + 
+		metadata[1][header]:"";
+	if (i+1 < 10) {this.descripText += " ";}
+	this.descripText += (i+1) + ") " + header + ": " + 
+	    metadata[0][header] + key + "\n";
     }
     this.descripTextArea.val(errors + this.descripText);
-    
-    // convert the dataGrid array to JSON-like format
-    // input: dataGrid[0] = [header names]
-    //        dataGrid[1] = [row 1 of data]
-    // output: [ {header1: row1/1, header2: row1/2}, 
-    //           {header1: row2/1, header2: row2/2}
-    
-    var mydata = [];
-    for (var i=1; i<dataGrid.length; i++) {
-	// rows
-	var tempRow = {};
-	for (var j=0; j<numColumns; j++) {
-	    // columns
-	    var header = dataGrid[0][j];
-	    if ((dataGrid[typeInd][j] === "ordinal" || 
-		 dataGrid[typeInd][j] === "quantitative") && 
-		i<typeInd) {
-		// make sure numbers are saved as numbers
-		tempRow[header] = +dataGrid[i][j];
-	    } else {
-		tempRow[header] = dataGrid[i][j];
-	    }
-	}
-	mydata.push(tempRow);
-    }
-
-    // remove datatype description rows from data
-    //    metadata[0] - key:value pairs for the data type (categorical, ...)
-    //    metadata[1] - key:value pairs for the uniqueness (unique, key, no)
-    var metadata = mydata.splice(-2,2);
-
-console.log("DataConverter> mydata:");
-console.dir(mydata);
-
-console.log("DataConverter> metadata:");
-console.dir(metadata);
-
-    // Determine which dims to display
-    var maxDims = 5,  // maximum number of dimensions
-	numDims = 0,
-	dims = [];
-    for (var prop in metadata[0]) {
-	if (metadata[0][prop] === "ordinal" || 
-	    metadata[0][prop] === "quantitative") {
-	    dims.push(prop);
-	    numDims++;
-	    if (numDims == maxDims) {
-		break;
-	    }
-	}
-    }
-    var n = dims.length;
-    
-console.log ("dims: " + dims);
 
     // find key: key in metadata[1]
     // find grouping column: categorical in metadata[0] and !key in metadata[1]
@@ -232,8 +181,28 @@ console.log ("key: " + key);
     this.descripText += "\nKEY: " + key + "\nGROUPING: " + grouping;
     this.descripTextArea.val(errors + this.descripText);
 
+/* 
+ * TODO: How and when to add in categorical fields to the SPLOM?
+ */
+
+    // Determine which dims to display
+    var maxDims = 5,  // maximum number of dimensions
+	numDims = 0,
+	dims = [];
+    for (var prop in metadata[0]) {
+	if (metadata[0][prop] === "ordinal" || 
+	    metadata[0][prop] === "quantitative") {
+	    dims.push(prop);
+	    numDims++;
+	    if (numDims == maxDims) { break; }
+	}
+    }
+    var n = dims.length;
+    
+console.log ("dims: " + dims);
+
     // draw the graphs
-    genSPLOM(mydata, dims, grouping, key);
+    genSPLOM(data, dims, grouping, key);
 };
 
 

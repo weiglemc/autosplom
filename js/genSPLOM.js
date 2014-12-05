@@ -77,7 +77,7 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 		return "translate(" + (n - d.i - 1) * size + "," + d.j * size + ")"; })
 	    .each(plot);
     
-    // titles for the diagonal.
+    // titles for the diagonal
     cell.filter(function(d) { return d.i === d.j; }).append("text")
 	.attr("x", padding)
 	.attr("y", padding)
@@ -104,6 +104,11 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
             .attr("y", padding / 2)
             .attr("width", size - padding)
             .attr("height", size - padding);
+
+	// special styling for diagonal
+	cell.selectAll("rect").filter(function(d) {return d.i === d.j;})
+	    .style("fill", "#ddd")
+	    .style("fill-opacity", 0.3);
 	
 	cell.selectAll("circle")
             .data(data)
