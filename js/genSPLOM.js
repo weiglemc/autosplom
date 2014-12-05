@@ -5,11 +5,16 @@ function genSPLOM(data, dims, grouping, key)
      *   [ {header1: row1/1, header2: row1/2}, 
      *    {header1: row2/1, header2: row2/2} ... ]
      *  dims - array of key names to be plotted
+     *  grouping - column header to group by color
+     *  key - column header for the key
      *  p[d.x] - x data value for this circle - inside plot()
      */
 
     console.log("genSPLOM> data:");
     console.dir(data);
+
+    // clear old graph first
+    d3.select("#splom").selectAll("svg").remove();
 
     // Set up SPLOM grid
     var	size = 150,
@@ -37,9 +42,6 @@ function genSPLOM(data, dims, grouping, key)
 
     xAxis.tickSize(size * n);
     yAxis.tickSize(-size * n);
-
-    // clear old graph first
-    d3.select("#splom").selectAll("svg").remove();
 
     var svg = d3.select("#splom").append("svg")
 	    .attr("width", size * n + padding)
@@ -75,7 +77,7 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 		return "translate(" + (n - d.i - 1) * size + "," + d.j * size + ")"; })
 	    .each(plot);
     
-    // Titles for the diagonal.
+    // titles for the diagonal.
     cell.filter(function(d) { return d.i === d.j; }).append("text")
 	.attr("x", padding)
 	.attr("y", padding)
@@ -83,11 +85,6 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 	.text(function(d) { return d.x; });
 
     function plot(p) {
-	var cell = d3.select(this);
-	
-	x.domain(domainByDim[p.x]);
-	y.domain(domainByDim[p.y]);
-
 	var tooltip = d3.select("body")
 	      .append("div")
 	      .style("font-size", "10pt")
@@ -95,6 +92,11 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 	      .style("position", "absolute")
               .style("z-index", "10")
               .style("visibility", "hidden");
+	
+	x.domain(domainByDim[p.x]);
+	y.domain(domainByDim[p.y]);
+
+	var cell = d3.select(this);
 	
 	cell.append("rect")
             .attr("class", "frame")

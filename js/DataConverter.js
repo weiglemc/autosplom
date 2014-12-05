@@ -105,7 +105,6 @@ DataConverter.prototype.resize = function(w,h) {
 DataConverter.prototype.convert = function() {
 
     this.inputText = this.inputTextArea.val();
-    this.descripText = "";
 
     //make sure there is input data before converting...
     if (this.inputText.length <= 0) {
@@ -133,16 +132,23 @@ DataConverter.prototype.convert = function() {
 
     dataGrid = DataDescriber(dataGrid, headerNames, headerTypes);
 
+/*
+ *  TODO: 
+ *   1) Change this textarea to a panel checkbox selector that selects a default 
+ *      maxDims to show, but then lets the user change those selections.
+ *   2) Let user change the key and grouping dims.
+ *   3) Let the user change the description?  For example, year can be categorical
+ *      instead of ordinal
+ */
+
     // print out results from new dataGrid from DataDescriber
-    this.descripText = "";
-    
     var numRows = dataGrid.length - 3; // headers, datatypes, key
     var numColumns = headerNames.length;
     var headerInd = 0;
     var typeInd = numRows+1;
     var keyInd = numRows+2;
 
-    // write out data
+    this.descripText = "";
     this.descripText += "Cols (dims): " + numColumns + "\t\t";
     this.descripText += "Rows: " + numRows + "\n";
     for (var j=0; j<numColumns; j++) {
@@ -180,30 +186,20 @@ DataConverter.prototype.convert = function() {
     }
 
     // remove datatype description rows from data
-    /*
-     *  metadata[0] - key:value pairs for the data type (categorical, ...)
-     *  metadata[1] - key:value pairs for the uniqueness (unique, key, no)
-     */
+    //    metadata[0] - key:value pairs for the data type (categorical, ...)
+    //    metadata[1] - key:value pairs for the uniqueness (unique, key, no)
     var metadata = mydata.splice(-2,2);
-    
-console.log("converter.js> mydata:");
+
+console.log("DataConverter> mydata:");
 console.dir(mydata);
 
-console.log("converter.js> metadata:");
+console.log("DataConverter> metadata:");
 console.dir(metadata);
 
     // Determine which dims to display
     var maxDims = 5,  // maximum number of dimensions
+	numDims = 0,
 	dims = [];
-
-// TODO: Add selector to let user choose dims
-
-/*	// hack for testing data
-	dims = d3.keys(data[0]).filter(function (d) {
-	    return (d === "Retail Price" || d === "Weight" || 
-		    d === "City MPG" || d === "HP" || d === "Hwy MPG");});
-*/
-    var numDims = 0;
     for (var prop in metadata[0]) {
 	if (metadata[0][prop] === "ordinal" || 
 	    metadata[0][prop] === "quantitative") {
@@ -233,6 +229,8 @@ console.log ("dims: " + dims);
 console.log ("grouping: " + grouping);
 console.log ("key: " + key);
 
+    this.descripText += "\nKEY: " + key + "\nGROUPING: " + grouping;
+    this.descripTextArea.val(errors + this.descripText);
 
     // draw the graphs
     genSPLOM(mydata, dims, grouping, key);
