@@ -1,6 +1,5 @@
-//
-//  converter.js
-//  Mr-Data-Converter
+//  DataConverter.js
+//  based on converter.js from Mr-Data-Converter
 //
 //  Created by Shan Carter on 2010-09-01.
 //
@@ -95,7 +94,7 @@ DataConverter.prototype.create = function(w,h) {
 DataConverter.prototype.resize = function(w,h) {
   var paneWidth = w;
 //  var paneHeight = ((h-90)/2)-20;
-    var paneHeight = ((h-90)/3);
+    var paneHeight = ((h-90)/3)-20;
 
   this.node.css({width:paneWidth});
   this.inputTextArea.css({width:paneWidth-20,height:paneHeight});
@@ -105,21 +104,23 @@ DataConverter.prototype.resize = function(w,h) {
 
 DataConverter.prototype.convert = function() {
 
-  this.inputText = this.inputTextArea.val();
-  this.descripText = "";
+    this.inputText = this.inputTextArea.val();
+    this.descripText = "";
 
-  //make sure there is input data before converting...
-  if (this.inputText.length > 0) {
-
-    if (this.includeWhiteSpace) {
-      this.newLine = "\n";
-      // console.log("yes")
-    } else {
-      this.indent = "";
-      this.newLine = "";
-      // console.log("no")
+    //make sure there is input data before converting...
+    if (this.inputText.length <= 0) {
+	return;
     }
 
+    if (this.includeWhiteSpace) {
+	this.newLine = "\n";
+	// console.log("yes")
+    } else {
+	this.indent = "";
+	this.newLine = "";
+	// console.log("no")
+    }
+    
     CSVParser.resetLog();
     var parseOutput = CSVParser.parse(this.inputText, this.headersProvided, this.delimiter, this.downcaseHeaders, this.upcaseHeaders);
 
@@ -130,66 +131,115 @@ DataConverter.prototype.convert = function() {
 
 // this.outputText = DataGridRenderer[this.outputDataType](dataGrid, headerNames, headerTypes, this.indent, this.newLine);
 
-      dataGrid = DataDescriber(dataGrid, headerNames, headerTypes);
+    dataGrid = DataDescriber(dataGrid, headerNames, headerTypes);
 
-      // print out results from new dataGrid from DataDescriber
-      this.descripText = "";
+    // print out results from new dataGrid from DataDescriber
+    this.descripText = "";
+    
+    var numRows = dataGrid.length - 3; // headers, datatypes, key
+    var numColumns = headerNames.length;
+    var headerInd = 0;
+    var typeInd = numRows+1;
+    var keyInd = numRows+2;
 
-      var numRows = dataGrid.length - 3; // headers, datatypes, key
-      var numColumns = headerNames.length;
+    // write out data
+    this.descripText += "Cols (dims): " + numColumns + "\t\t";
+    this.descripText += "Rows: " + numRows + "\n";
+    for (var j=0; j<numColumns; j++) {
+	var key = (dataGrid[keyInd][j]!=="no")? " - " + 
+		dataGrid[keyInd][j]:"";
+	if (j+1 < 10) {this.descripText += " ";}
+	this.descripText += (j+1) + ") " +  headerNames[j] + ": " + 
+	    dataGrid[typeInd][j] + key + "\n";
+    }
+    this.descripTextArea.val(errors + this.descripText);
+    
+    // convert the dataGrid array to JSON-like format
+    // input: dataGrid[0] = [header names]
+    //        dataGrid[1] = [row 1 of data]
+    // output: [ {header1: row1/1, header2: row1/2}, 
+    //           {header1: row2/1, header2: row2/2}
+    
+    var mydata = [];
+    for (var i=1; i<dataGrid.length; i++) {
+	// rows
+	var tempRow = {};
+	for (var j=0; j<numColumns; j++) {
+	    // columns
+	    var header = dataGrid[0][j];
+	    if ((dataGrid[typeInd][j] === "ordinal" || 
+		 dataGrid[typeInd][j] === "quantitative") && 
+		i<typeInd) {
+		// make sure numbers are saved as numbers
+		tempRow[header] = +dataGrid[i][j];
+	    } else {
+		tempRow[header] = dataGrid[i][j];
+	    }
+	}
+	mydata.push(tempRow);
+    }
 
-      var headerInd = 0;
-      var typeInd = numRows+1;
-      var keyInd = numRows+2;
+    // remove datatype description rows from data
+    /*
+     *  metadata[0] - key:value pairs for the data type (categorical, ...)
+     *  metadata[1] - key:value pairs for the uniqueness (unique, key, no)
+     */
+    var metadata = mydata.splice(-2,2);
+    
+console.log("converter.js> mydata:");
+console.dir(mydata);
 
-      // write out data
-      this.descripText += "numItems: " + numRows + "\n";
-      this.descripText += "numDim: " + numColumns + "\n";
-      for (var j=0; j<numColumns; j++) {
-	  var key = (dataGrid[keyInd][j]!=="no")? " - " + 
-		  dataGrid[keyInd][j]:"";
-	  this.descripText += j + ": " +  headerNames[j] + ": " + 
-	      dataGrid[typeInd][j] + key + "\n";
-      }
-      this.descripTextArea.val(errors + this.descripText);
+console.log("converter.js> metadata:");
+console.dir(metadata);
 
-      // convert the dataGrid array to JSON-like format
-      // input: dataGrid[0] = [header names]
-      //        dataGrid[1] = [row 1 of data]
-      // output: [ {header1: row1/1, header2: row1/2}, 
-      //           {header1: row2/1, header2: row2/2}
+    // Determine which dims to display
+    var maxDims = 5,  // maximum number of dimensions
+	dims = [];
 
-      var mydata = [];
-      for (var i=1; i<dataGrid.length; i++) {
-	  // rows
-	  var tempRow = {};
-	  for (var j=0; j<numColumns; j++) {
-	      // columns
-	      var header = dataGrid[0][j];
-	      if ((dataGrid[typeInd][j] === "ordinal" || 
-		  dataGrid[typeInd][j] === "quantitative") && 
-		 i<typeInd) {
-		  // make sure numbers are saved as numbers
-		  tempRow[header] = +dataGrid[i][j];
-	      } else {
-		  tempRow[header] = dataGrid[i][j];
-	      }
-	  }
-	  mydata.push(tempRow);
-      }
+// TODO: Add selector to let user choose dims
 
-//console.log("mydata");
-//console.dir(mydata);
+/*	// hack for testing data
+	dims = d3.keys(data[0]).filter(function (d) {
+	    return (d === "Retail Price" || d === "Weight" || 
+		    d === "City MPG" || d === "HP" || d === "Hwy MPG");});
+*/
+    var numDims = 0;
+    for (var prop in metadata[0]) {
+	if (metadata[0][prop] === "ordinal" || 
+	    metadata[0][prop] === "quantitative") {
+	    dims.push(prop);
+	    numDims++;
+	    if (numDims == maxDims) {
+		break;
+	    }
+	}
+    }
+    var n = dims.length;
+    
+console.log ("dims: " + dims);
 
-      // draw the graphs
-      genSPLOM(mydata);
+    // find key: key in metadata[1]
+    // find grouping column: categorical in metadata[0] and !key in metadata[1]
+    var grouping = "none", 
+	key = "item";
+    for (var prop in metadata[0]) {
+	if (metadata[1][prop] === "key") {
+	    key = prop;
+	} else if (metadata[0][prop] === "categorical") {
+	    grouping = prop;
+	}
+    }
 
-  }; //end test for existence of input text
+console.log ("grouping: " + grouping);
+console.log ("key: " + key);
+
+
+    // draw the graphs
+    genSPLOM(mydata, dims, grouping, key);
 };
 
 
 DataConverter.prototype.insertSampleData = function() {
-//  this.inputTextArea.val("NAME\tVALUE\tCOLOR\tDATE\nAlan\t12\tblue\tSep. 25, 2009\nShan\t13\t\"green\tblue\"\tSep. 27, 2009\nJohn\t45\torange\tSep. 29, 2009\nMinna\t27\tteal\tSep. 30, 2009");
   val = "Manufacturer,Vehicle Name,Small/Sporty/Compact/Large Sedan,Sports Car,SUV,Wagon,Minivan,Pickup,AWD,RWD,Retail Price,Dealer Cost,Engine Size (l),Cyl,HP,City MPG,Hwy MPG,Weight,Wheel Base,Len,Width\n";
   val += "Acura,Acura 3.5 RL 4dr,1,0,0,0,0,0,0,0,43755,39014,3.5,6,225,18,24,3880,115,197,72\n";
   val += "Acura,Acura 3.5 RL w/Navigation 4dr,1,0,0,0,0,0,0,0,46100,41100,3.5,6,225,18,24,3893,115,197,72\n";

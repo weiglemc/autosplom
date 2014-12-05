@@ -8,11 +8,11 @@
 
 function DataDescriber (dataGrid, headerNames, headerTypes) {
   //inits...
-  var outputText = "";
-  var numRows = dataGrid.length;
-  var numColumns = headerNames.length;
-  var keyRow = [];
-  var data = [];
+    var outputText = "";
+    var numRows = dataGrid.length;
+    var numColumns = headerNames.length;
+    var keyRow = [];
+    var data = [];
 
 /*  
 console.log("dataGrid");
@@ -23,7 +23,7 @@ console.log("headerTypes");
 console.dir(headerTypes);
 */
 
-  for (var j=0; j < numColumns; j++) {
+    for (var j=0; j < numColumns; j++) {
       // look at each dimension  
       keyRow[j] = "unique";
       var rowInd = 0;
@@ -50,9 +50,9 @@ console.dir(headerTypes);
 	      headerTypes[j] = "binary";
 	  }
       }
-  }
+    }
 
-  for (var j=0; j < numColumns; j++) {
+    for (var j=0; j < numColumns; j++) {
       if (keyRow[j] === "unique" && headerTypes[j] === "string") {
 	  keyRow[j] = "key";
       }
@@ -65,13 +65,8 @@ console.dir(headerTypes);
       } else if (headerTypes[j] === "int") {
 	  headerTypes[j] = "ordinal";
       }
-  }
-
-//console.log ("keyRow:");
-//console.dir(keyRow);    
-
-//console.log ("headerTypes: " + headerTypes);
-
+    }
+    
     // assemble data
     data.push(headerNames);
     for (var j=0; j<numRows; j++) {
@@ -80,14 +75,8 @@ console.dir(headerTypes);
     data.push(headerTypes);
     data.push(keyRow);
 
-    // add header names and types to dataGrid
-//    dataGrid.push(headerNames);
-//    dataGrid.push(headerTypes);
-//    dataGrid.push(keyRow);
-
-console.log("data");
+console.log("DataDescriber> data:");
 console.dir(data);
 
-//    return dataGrid;
     return data;
 }

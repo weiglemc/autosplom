@@ -1,25 +1,15 @@
-function genSPLOM(data) 
+function genSPLOM(data, dims, grouping, key) 
 {
-    // input: [ {header1: row1/1, header2: row1/2}, 
-    //          {header1: row2/1, header2: row2/2}
-
-    console.log("genSPLOM> data");
-    console.dir(data);
-
-    // remove datatype description rows from data
-    var metadata = data.splice(-2,2);
-
-console.log("metadata:");
-console.dir(metadata);
-
     /*
-     * AFTER THIS POINT:
      *  data - just the key:value pairs for the data points
-     *  metadata[0] - key:value pairs for the data type (categorical, quantitative, ...)
-     *  metadata[1] - key:value pairs for the uniqueness (unique, key, no)
+     *   [ {header1: row1/1, header2: row1/2}, 
+     *    {header1: row2/1, header2: row2/2} ... ]
      *  dims - array of key names to be plotted
      *  p[d.x] - x data value for this circle - inside plot()
      */
+
+    console.log("genSPLOM> data:");
+    console.dir(data);
 
     // Set up SPLOM grid
     var	size = 150,
@@ -43,31 +33,7 @@ console.dir(metadata);
     
     var color = d3.scale.category10();
 
-
-    // Determine dims to plot.  
-    var maxDims = 5,  // maximum number of dimensions
-	dims = [];
-
-// TODO: Add selector to let user choose dims
-
-/*	// hack for testing data
-	dims = d3.keys(data[0]).filter(function (d) {
-	    return (d === "Retail Price" || d === "Weight" || 
-		    d === "City MPG" || d === "HP" || d === "Hwy MPG");});
-*/
-	var numDims = 0;
-	for (var prop in metadata[0]) {
-	    if (metadata[0][prop] === "ordinal" || metadata[0][prop] === "quantitative") {
-		dims.push(prop);
-		numDims++;
-		if (numDims == maxDims) {
-		    break;
-		}
-	    }
-	}
     var n = dims.length;
-
-console.log ("dims: " + dims);
 
     xAxis.tickSize(size * n);
     yAxis.tickSize(-size * n);
@@ -100,29 +66,7 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 	.attr("class", "y axis")
 	.attr("transform", function(d, i) { return "translate(0," + i * size + ")"; })
 	.each(function(d) { y.domain(domainByDim[d]); d3.select(this).call(yAxis); });
-    
-    // find grouping column - categorical in metadata[0] and !key in metadata[1]
-    var categorical = d3.set();
-    for (var prop in metadata[0]) {
-	// add categorical types to set
-	if (metadata[0][prop] === "categorical") {categorical.add(prop);}
-    }
-    for (var prop in metadata[1]) {
-	// remove any that are listed as key
-	if (categorical.has(prop) && metadata[1][prop] == "key") {categorical.remove(prop);}
-    }
-    var grouping = categorical.values()[0];   // grab the 1st one
-    console.log ("grouping: " + grouping);
-
-    // find key column - key in metadata[1]
-    var key;
-    for (var prop in metadata[1]) {
-	if (metadata[1][prop] === "key") {
-	    key = prop;
-	    break;
-	}
-    }
-
+        
     var cell = svg.selectAll(".cell")
 	    .data(cross(dims, dims))
 	    .enter().append("g")
@@ -138,8 +82,6 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
 	.attr("dy", ".71em")
 	.text(function(d) { return d.x; });
 
-// TODO: generate histogram on the diagonal
-    
     function plot(p) {
 	var cell = d3.select(this);
 	
@@ -169,9 +111,9 @@ console.log ("domainByDim[" + dim + "]: " + domainByDim[dim]);
             .attr("r", 3)
             .style("fill", function(d) { return color(d[grouping]); })
 	    .on ("mouseover", function () {return tooltip.style("visibility", "visible");})
-	    .on ("mousemove", function (d) {
-		var keyLabel = d[key];
-		var tip = keyLabel + " " + p.x + ": " + d[p.x] + " " + p.y +
+	    .on ("mousemove", function (d,i) {
+		var keyLabel = (key === "item")? "item " + i : d[key];
+		var tip = "[" + keyLabel + "] " + p.x + ": " + d[p.x] + " " + p.y +
 			": " + d[p.y];
 		return tooltip.style("top", (d3.event.pageY-10)+"px")
 		    .style("left", (d3.event.pageX+10)+"px")

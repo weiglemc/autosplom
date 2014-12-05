@@ -126,7 +126,7 @@ p.dataHeaders{
   color: black;
   font-family: monospace;
   font-size: 12px;
-  height: 200px;
+  height: 150px;
   line-height: 18px;
   padding: 10px;
   border-color:#000000 #666666 #666666 #000000;
@@ -172,7 +172,7 @@ p.groupHeadline {
     color: black;
     font-family: monospace;
     font-size: 12px;
-    height: 500px;
+    height: 450px;
     line-height: 18px;
     padding: 10px;
     border-color:#000000 #666666 #666666 #000000;
