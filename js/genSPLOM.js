@@ -10,8 +10,12 @@ function genSPLOM(data, dims, grouping, key)
      *  p[d.x] - x data value for this circle - inside plot()
      */
 
-    console.log("genSPLOM> data:");
-    console.dir(data);
+console.log("genSPLOM>");
+//console.log("data:");
+//console.dir(data);
+
+console.log("key: " + key);
+console.log("grouping: " + grouping);
 
     // clear old graph first
     d3.select("#splom").selectAll("svg").remove();

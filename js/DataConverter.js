@@ -24,14 +24,11 @@ function DataConverter(nodeId, descripId) {
   this.rowDelimiter           = "\n";
 
   this.inputTextArea          = {};
-  this.descripTextArea        = {};
 
   this.inputHeader            = {};
-  this.descripHeader          = {};
   this.dataSelect             = {};
 
   this.inputText              = "";
-  this.descripText            = "";
 
   this.newLine                = "\n";
   this.indent                 = "  ";
@@ -46,6 +43,12 @@ function DataConverter(nodeId, descripId) {
   this.includeWhiteSpace      = true;
   this.useTabsForIndent       = false;
 
+  this.data = [];
+  this.dims = [];
+  this.headerNames = [];
+  this.key = "item";
+  this.grouping = "none";
+
 }
 
 //---------------------------------------
@@ -55,15 +58,7 @@ function DataConverter(nodeId, descripId) {
 DataConverter.prototype.create = function(w,h) {
   var self = this;
 
-  // build HTML for description output
-  var descripHeaderText = '<p class="settings">Data Description</p>';
-  this.descripHeader = $(descripHeaderText);
-  this.descrip.append(this.descripHeader);
-  this.descripTextArea = $('<textarea class="textOutputs" id="datadescrip"></textarea>');
-  this.descrip.append(this.descripTextArea);
-//  this.descripTextArea.click(function(evt){this.select();});
- 
-  //build HTML for converter
+  // build HTML for converter
   this.inputHeader = $('<div class="groupHeader" id="inputHeader"><p class="groupHeadline">Input CSV or tab-delimited data. <span class="subhead"> Using Excel? Simply copy and paste. No data on hand? <a href="#" id="insertSample">Use sample</a></span></p></div>');
   this.inputTextArea = $('<textarea class="textInputs" id="dataInput"></textarea>');
 
@@ -91,6 +86,7 @@ DataConverter.prototype.create = function(w,h) {
   this.resize(w,h);
 };
 
+
 DataConverter.prototype.resize = function(w,h) {
     var paneWidth = w;
     var paneHeight = ((h-90)/3)-20;
@@ -100,6 +96,7 @@ DataConverter.prototype.resize = function(w,h) {
 
     $("#splom").css({top: paneHeight+75});
 };
+
 
 DataConverter.prototype.convert = function() {
 
@@ -121,88 +118,224 @@ DataConverter.prototype.convert = function() {
     var parseOutput = CSVParser.parse(this.inputText, this.headersProvided, this.delimiter, this.downcaseHeaders, this.upcaseHeaders);
 
     var dataGrid = parseOutput.dataGrid;
-    var headerNames = parseOutput.headerNames;
+    this.headerNames = parseOutput.headerNames;
     var headerTypes = parseOutput.headerTypes;
-    var errors = parseOutput.errors;
 
-    var data = DataDescriber(dataGrid, headerNames, headerTypes);
+    var outputText = "";
+    var numRows = dataGrid.length;
+    var numColumns = this.headerNames.length;
+    var keyRow = [];
+
+    for (var j=0; j < numColumns; j++) {
+      // look at each dimension  
+      keyRow[j] = "unique";
+      var rowInd = 0;
+      while (keyRow[j] === "unique" && rowInd < (numRows-1)) {
+	  // look at each item
+	  for (var i=rowInd+1; i<numRows; i++) {
+              if (dataGrid[rowInd][j] == dataGrid[i][j]) {
+		  keyRow[j] = "no"; 
+		  break;
+              }
+	  }
+	  rowInd++;
+      }
+   
+      // look at each int dimension (binary or not)
+      if (headerTypes[j] === "int") {
+	  var binary = true;
+	  for (var i=rowInd+1; i<numRows; i++) {
+	      if (dataGrid[i][j] != 0 && dataGrid[i][j] != 1) {
+		  binary = false;
+	      }
+	  }
+	  if (binary && keyRow[j] !== "unique") {
+	      headerTypes[j] = "binary";
+	  }
+      }
+    }
+
+    for (var j=0; j < numColumns; j++) {
+      if (keyRow[j] === "unique" && headerTypes[j] === "string") {
+	  keyRow[j] = "key";
+      }
+
+      // replace (int, float, string) type with (categorical, quantitative, ordinal, binary)
+      if (headerTypes[j] === "string") {
+	  headerTypes[j] = "categorical";
+      } else if (headerTypes[j] === "float") {
+	  headerTypes[j] = "quantitative";
+      } else if (headerTypes[j] === "int") {
+	  headerTypes[j] = "ordinal";
+      }
+    }
+
+    // convert the dataGrid array to JSON-like format
+    // INPUT: headerNames = [header names]
+    //        dataGrid = data
+    //        headerTypes = [header types]
+    //        keyRow = [key, unique info]
+    // OUTPUT: data = [ {header1: row1/1, header2: row1/2}, 
+    //           {header1: row2/1, header2: row2/2}
+    this.data = [];
+    for (var i=0; i<dataGrid.length; i++) {
+	// rows
+	var tempRow = {};
+	for (var j=0; j<numColumns; j++) {
+	    // columns
+	    var header = this.headerNames[j];
+	    if ((headerTypes[j] === "ordinal" || 
+		 headerTypes[j] === "quantitative") && i<j) {
+		// make sure numbers are saved as numbers
+		tempRow[header] = +dataGrid[i][j];
+	    } else {
+		tempRow[header] = dataGrid[i][j];
+	    }
+	}
+	this.data.push(tempRow);
+    }
+    // add in metadata
+    var tempRow1 = {}, tempRow2 = {};
+    for (var j=0; j<numColumns; j++) {
+	var header = this.headerNames[j];
+	tempRow1[header] = headerTypes[j];
+	tempRow2[header] = keyRow[j];
+    }
+    this.data.push(tempRow1);
+    this.data.push(tempRow2);
 
     // remove datatype description rows from data
     //    metadata[0] - key:value pairs for the data type (categorical, ...)
     //    metadata[1] - key:value pairs for the uniqueness (unique, key, no)
-    var metadata = data.splice(-2,2);
+    var metadata = this.data.splice(-2,2);
 
-console.log("DataConverter> data:");
-console.dir(data);
+//console.log("DataConverter> data:");
+//console.dir(this.data);
 
-console.log("DataConverter> metadata:");
-console.dir(metadata);
+//console.log("DataConverter> metadata:");
+//console.dir(metadata);
 
-/*
- *  TODO: 
- *   1) Change this textarea to a panel checkbox selector that selects a default 
- *      maxDims to show, but then lets the user change those selections.
- *   2) Let user change the key and grouping dims.
- *   3) Let the user change the data type?  For example, year can be categorical
- *      instead of ordinal
- */
-
-    var numRows = data.length;
-    var numColumns = d3.keys(data[0]).length;
-
-    this.descripText = "";
-    this.descripText += "Cols (dims): " + numColumns + "\t\t";
-    this.descripText += "Rows: " + numRows + "\n";
-    for (var i=0; i<numColumns; i++) {
-	var header = headerNames[i];
-	var key = (metadata[1][header]!=="no")? " - " + 
-		metadata[1][header]:"";
-	if (i+1 < 10) {this.descripText += " ";}
-	this.descripText += (i+1) + ") " + header + ": " + 
-	    metadata[0][header] + key + "\n";
-    }
-    this.descripTextArea.val(errors + this.descripText);
+    var numRows = this.data.length;
+    var numColumns = d3.keys(this.data[0]).length;
 
     // find key: key in metadata[1]
     // find grouping column: categorical in metadata[0] and !key in metadata[1]
-    var grouping = "none", 
-	key = "item";
     for (var prop in metadata[0]) {
 	if (metadata[1][prop] === "key") {
-	    key = prop;
+	    this.key = prop;
 	} else if (metadata[0][prop] === "categorical") {
-	    grouping = prop;
+	    this.grouping = prop;
+	    metadata[1][prop] = "grouping";
 	}
     }
 
-console.log ("grouping: " + grouping);
-console.log ("key: " + key);
-
-    this.descripText += "\nKEY: " + key + "\nGROUPING: " + grouping;
-    this.descripTextArea.val(errors + this.descripText);
-
-/* 
- * TODO: How and when to add in categorical fields to the SPLOM?
- */
+console.log ("grouping: " + this.grouping);
+console.log ("key: " + this.key);
 
     // Determine which dims to display
     var maxDims = 5,  // maximum number of dimensions
-	numDims = 0,
-	dims = [];
+	numDims = 0;
+    this.dims = [];
     for (var prop in metadata[0]) {
 	if (metadata[0][prop] === "ordinal" || 
 	    metadata[0][prop] === "quantitative") {
-	    dims.push(prop);
+	    this.dims.push(prop);
 	    numDims++;
 	    if (numDims == maxDims) { break; }
 	}
     }
-    var n = dims.length;
-    
-console.log ("dims: " + dims);
 
-    // draw the graphs
-    genSPLOM(data, dims, grouping, key);
+console.log ("dims: " + this.dims);
+
+    // Create form for selecting dims
+    var maxStrLen = 25;
+    var formtext = "<h3 id='dims'>Dimensions</h3><form id='dimsForm'>";
+    for (var i=0; i<numColumns; i++) {
+	var header = this.headerNames[i];
+	var id = "dim" + i;
+	var checked = (this.dims.indexOf(header) != -1)?"checked":"";
+	formtext += "<p>&nbsp; <label><input class='dimsElement' " + 
+	    "type='checkbox' id='" + id + "' " + 
+	    checked + "/> " + 
+	    header.substr(0,maxStrLen) + 
+	    ((header.length>maxStrLen)?"...":"") + "</label>";
+	formtext += "<span style='font-size:9pt;'> - " + 
+	    metadata[0][header] + "</span></p>";
+    }
+
+    // add drop-down selector for key
+    formtext += "<p>&nbsp; </p><p><label>Key: <select class='dimsElement' id='key'>";
+    for (var i=0; i<numColumns; i++) {
+	var header = this.headerNames[i];
+	var id = "key"+i;
+	formtext += "<option value='" + id + "' id='" + id + "' " +
+	    ((metadata[1][header]==="key")?"selected":"") + ">"+ 
+	    header + "</option>";
+    }
+    formtext += "</select></label></p>";
+
+    // add drop-down selector for grouping
+    formtext += "<p><label>Color: <select class='dimsElement' id='grouping'>";
+    for (var i=0; i<numColumns; i++) {
+	var header = this.headerNames[i];
+	var id = "group"+i;
+	formtext += "<option value='" + id + "' id='" + id + "' " + 
+	    ((metadata[1][header]==="grouping")?"selected":"") + ">" + 
+	    header + "</option>";
+    }
+    formtext += "</select></label></p></form>";
+
+    this.descrip.html(formtext);
+
+    $(".dimsElement").change(this, function(evt) {
+	// sends 'this' to the function as evt.data
+	if (evt) {
+	    _gaq.push(['_trackEvent', 'Dims',evt.currentTarget.id ]);
+	};
+// console.log (evt.data);
+// console.log (evt.currentTarget.id);  // dim7
+// console.log (this);  // gives the whole html input line
+	updateDims(evt.data, evt.currentTarget.id);
+    });
+
+    this.draw();   // make sure the plot gets drawn
+};
+
+
+function updateDims (d, id) {    
+//console.log ("updateDims> " + id);
+
+
+    if (id == "key") {
+	// check key drop-down
+	var option = $('#key').val();   // returns key1, key2, ...
+	var ind = option.substring(3);  // strip off "key"
+	d.key = d.headerNames[ind];
+    } else if (id == "grouping") {
+	// check grouping drop-down
+	var option = $('#grouping').val(); // returns group1, group2, ...
+	var ind = option.substring(5);     // strip off "group"
+	d.grouping = d.headerNames[ind];
+    } else {
+	// check checkboxes
+	var numColumns = d.headerNames.length;
+	d.dims = [];
+	for (var i=0; i<numColumns; i++) {
+	    var id = "dim" + i;
+	    if ($('#'+id).attr('checked')) {
+		var header = d.headerNames[i];
+		d.dims.push(header);
+	    }
+	}
+    }	
+
+    d.draw();
+};
+
+
+DataConverter.prototype.draw = function() {
+//console.log ("draw>");
+    genSPLOM (this.data, this.dims, this.grouping, this.key);
 };
 
 

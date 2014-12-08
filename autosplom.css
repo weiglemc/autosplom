@@ -44,10 +44,20 @@ body {
 }
 
 #description p {
-	margin-bottom: 18px;
+    margin-bottom: 18px;
 }
 
+/*
 #header h3 {
+  font-size: 12px;
+  margin: 15px 0 10px 0;
+  padding: 15px 0 0 0;
+  border-top: solid 1px #CCC;
+  text-transform: uppercase;
+}
+*/
+
+h3 {
   font-size: 12px;
   margin: 15px 0 10px 0;
   padding: 15px 0 0 0;
@@ -70,7 +80,7 @@ p {
 
 /*settings*/
 #settings {
-
+/*    border-bottom: solid 1px #CCC; */
 }
 
 
@@ -92,7 +102,7 @@ p {
 /* data description (want it to be below the settings panel) */
 #datadescrip {
     position: absolute;
-    top: 350px;
+    top: 325px;
     width: 275px;
 }
 

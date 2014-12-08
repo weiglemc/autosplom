@@ -19,23 +19,22 @@ $(document).ready(function(){
 
   d.create(w,h);
 
-  $(".settingsElement").change(updateSettings);
-
   $(window).bind('resize',function() {  
-
       w = win.width() - widthOffset;
       h = win.height() - heightOffset;
       d.resize(w,h);
       sidebar.height(h);
-
     });
 
+  $(".settingsElement").change(updateSettings);
 
   function updateSettings (evt) {
     
     if (evt) {
       _gaq.push(['_trackEvent', 'Settings',evt.currentTarget.id ]);
     };
+
+console.log ("updateSettings>");
 
     d.includeWhiteSpace = $('#includeWhiteSpaceCB').attr('checked');
     
@@ -76,8 +75,9 @@ $(document).ready(function(){
     
     d.useUnderscores = true;
     
-    d.convert();
+    d.convert();  // convert will also call d.draw()
   };
+
 
   updateSettings();
   
