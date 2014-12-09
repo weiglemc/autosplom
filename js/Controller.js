@@ -35,21 +35,6 @@ $(document).ready(function(){
     };
 
 console.log ("updateSettings>");
-
-    d.includeWhiteSpace = $('#includeWhiteSpaceCB').attr('checked');
-    
-    if (d.includeWhiteSpace) {
-      $("input[name=indentType]").removeAttr("disabled");
-      var indentType = $('input[name=indentType]:checked').val();
-      if (indentType === "tabs") {
-        d.indent = "\t";
-      } else if (indentType === "spaces") {
-        d.indent = "  ";
-      }
-    } else {
-      $("input[name=indentType]").attr("disabled", "disabled");
-    }
-
     d.headersProvided = $('#headersProvidedCB').attr('checked');
 
     if (d.headersProvided) {

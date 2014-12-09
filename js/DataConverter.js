@@ -18,8 +18,6 @@ function DataConverter(nodeId, descripId) {
   this.descripId              = descripId;
   this.descrip                = $("#"+descripId);
 
-  this.outputDataType         = "json";
-
   this.columnDelimiter        = "\t";
   this.rowDelimiter           = "\n";
 
@@ -30,18 +28,9 @@ function DataConverter(nodeId, descripId) {
 
   this.inputText              = "";
 
-  this.newLine                = "\n";
-  this.indent                 = "  ";
-
-  this.commentLine            = "//";
-  this.commentLineEnd         = "";
-
-  this.useUnderscores         = true;
   this.headersProvided        = true;
   this.downcaseHeaders        = true;
   this.upcaseHeaders          = false;
-  this.includeWhiteSpace      = true;
-  this.useTabsForIndent       = false;
 
   this.data = [];
   this.dims = [];
@@ -72,16 +61,8 @@ DataConverter.prototype.create = function(w,h) {
     _gaq.push(['_trackEvent', 'SampleData','InsertGeneric']);
   });
 
-  $("#dataInput").keyup(function() {self.convert()});
-  $("#dataInput").change(function() {
-    self.convert();
-    _gaq.push(['_trackEvent', 'DataType',self.outputDataType]);
-  });
-
-  $("#dataSelector").bind('change',function(evt){
-       self.outputDataType = $(this).val();
-       self.convert();
-     });
+  $("#dataInput").keyup(function() {self.convert();});
+  $("#dataInput").change(function() {self.convert();});
 
   this.resize(w,h);
 };
@@ -107,21 +88,13 @@ DataConverter.prototype.convert = function() {
 	return;
     }
 
-    if (this.includeWhiteSpace) {
-	this.newLine = "\n";
-    } else {
-	this.indent = "";
-	this.newLine = "";
-    }
-    
     CSVParser.resetLog();
     var parseOutput = CSVParser.parse(this.inputText, this.headersProvided, this.delimiter, this.downcaseHeaders, this.upcaseHeaders);
 
     var dataGrid = parseOutput.dataGrid;
-    this.headerNames = parseOutput.headerNames;
     var headerTypes = parseOutput.headerTypes;
+    this.headerNames = parseOutput.headerNames;
 
-    var outputText = "";
     var numRows = dataGrid.length;
     var numColumns = this.headerNames.length;
     var keyRow = [];
@@ -215,9 +188,6 @@ DataConverter.prototype.convert = function() {
 //console.log("DataConverter> metadata:");
 //console.dir(metadata);
 
-    var numRows = this.data.length;
-    var numColumns = d3.keys(this.data[0]).length;
-
     // find key: key in metadata[1]
     // find grouping column: categorical in metadata[0] and !key in metadata[1]
     for (var prop in metadata[0]) {
@@ -233,7 +203,7 @@ console.log ("grouping: " + this.grouping);
 console.log ("key: " + this.key);
 
     // Determine which dims to display
-    var maxDims = 5,  // maximum number of dimensions
+    var maxDims = 5,  // default max number of dimensions
 	numDims = 0;
     this.dims = [];
     for (var prop in metadata[0]) {
@@ -249,52 +219,52 @@ console.log ("dims: " + this.dims);
 
     // Create form for selecting dims
     var maxStrLen = 25;
-    var formtext = "<h3 id='dims'>Dimensions</h3><form id='dimsForm'>";
+    var dimText = "<h3 id='dims'>Dimensions</h3>" + 
+	    "<p style='font-size:9pt; margin-left:8px;'>Columns: " + numColumns +
+	    "&nbsp; &nbsp;Rows: " + numRows;
+    var formText = dimText + "<form id='dimsForm'>";
     for (var i=0; i<numColumns; i++) {
 	var header = this.headerNames[i];
 	var id = "dim" + i;
 	var checked = (this.dims.indexOf(header) != -1)?"checked":"";
-	formtext += "<p>&nbsp; <label><input class='dimsElement' " + 
+	formText += "<p>&nbsp; <label><input class='dimsElement' " + 
 	    "type='checkbox' id='" + id + "' " + 
 	    checked + "/> " + 
 	    header.substr(0,maxStrLen) + 
 	    ((header.length>maxStrLen)?"...":"") + "</label>";
-	formtext += "<span style='font-size:9pt;'> - " + 
+	formText += "<span style='font-size:9pt;'> - " + 
 	    metadata[0][header] + "</span></p>";
     }
 
     // add drop-down selector for key
-    formtext += "<p>&nbsp; </p><p><label>Key: <select class='dimsElement' id='key'>";
+    formText += "<p>&nbsp; </p><p><label>Key: <select class='dimsElement' id='key'>";
     for (var i=0; i<numColumns; i++) {
 	var header = this.headerNames[i];
 	var id = "key"+i;
-	formtext += "<option value='" + id + "' id='" + id + "' " +
+	formText += "<option value='" + id + "' id='" + id + "' " +
 	    ((metadata[1][header]==="key")?"selected":"") + ">"+ 
 	    header + "</option>";
     }
-    formtext += "</select></label></p>";
+    formText += "</select></label></p>";
 
     // add drop-down selector for grouping
-    formtext += "<p><label>Color: <select class='dimsElement' id='grouping'>";
+    formText += "<p><label>Color: <select class='dimsElement' id='grouping'>";
     for (var i=0; i<numColumns; i++) {
 	var header = this.headerNames[i];
 	var id = "group"+i;
-	formtext += "<option value='" + id + "' id='" + id + "' " + 
+	formText += "<option value='" + id + "' id='" + id + "' " + 
 	    ((metadata[1][header]==="grouping")?"selected":"") + ">" + 
 	    header + "</option>";
     }
-    formtext += "</select></label></p></form>";
+    formText += "</select></label></p></form>";
 
-    this.descrip.html(formtext);
+    this.descrip.html(formText);
 
     $(".dimsElement").change(this, function(evt) {
 	// sends 'this' to the function as evt.data
 	if (evt) {
 	    _gaq.push(['_trackEvent', 'Dims',evt.currentTarget.id ]);
 	};
-// console.log (evt.data);
-// console.log (evt.currentTarget.id);  // dim7
-// console.log (this);  // gives the whole html input line
 	updateDims(evt.data, evt.currentTarget.id);
     });
 
