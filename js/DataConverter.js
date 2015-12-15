@@ -85,7 +85,7 @@ DataConverter.prototype.convert = function() {
 
     //make sure there is input data before converting...
     if (this.inputText.length <= 0) {
-	return;
+  return;
     }
 
     CSVParser.resetLog();
@@ -100,46 +100,46 @@ DataConverter.prototype.convert = function() {
     var keyRow = [];
 
     for (var j=0; j < numColumns; j++) {
-      // look at each dimension  
+      // look at each dimension
       keyRow[j] = "unique";
       var rowInd = 0;
       while (keyRow[j] === "unique" && rowInd < (numRows-1)) {
-	  // look at each item
-	  for (var i=rowInd+1; i<numRows; i++) {
+    // look at each item
+    for (var i=rowInd+1; i<numRows; i++) {
               if (dataGrid[rowInd][j] == dataGrid[i][j]) {
-		  keyRow[j] = "no"; 
-		  break;
+      keyRow[j] = "no";
+      break;
               }
-	  }
-	  rowInd++;
+    }
+    rowInd++;
       }
-   
+
       // look at each int dimension (binary or not)
       if (headerTypes[j] === "int") {
-	  var binary = true;
-	  for (var i=rowInd+1; i<numRows; i++) {
-	      if (dataGrid[i][j] != 0 && dataGrid[i][j] != 1) {
-		  binary = false;
-	      }
-	  }
-	  if (binary && keyRow[j] !== "unique") {
-	      headerTypes[j] = "binary";
-	  }
+    var binary = true;
+    for (var i=rowInd+1; i<numRows; i++) {
+        if (dataGrid[i][j] != 0 && dataGrid[i][j] != 1) {
+      binary = false;
+        }
+    }
+    if (binary && keyRow[j] !== "unique") {
+        headerTypes[j] = "binary";
+    }
       }
     }
 
     for (var j=0; j < numColumns; j++) {
       if (keyRow[j] === "unique" && headerTypes[j] === "string") {
-	  keyRow[j] = "key";
+    keyRow[j] = "key";
       }
 
       // replace (int, float, string) type with (categorical, quantitative, ordinal, binary)
       if (headerTypes[j] === "string") {
-	  headerTypes[j] = "categorical";
+    headerTypes[j] = "categorical";
       } else if (headerTypes[j] === "float") {
-	  headerTypes[j] = "quantitative";
+    headerTypes[j] = "quantitative";
       } else if (headerTypes[j] === "int") {
-	  headerTypes[j] = "ordinal";
+    headerTypes[j] = "ordinal";
       }
     }
 
@@ -148,31 +148,31 @@ DataConverter.prototype.convert = function() {
     //        dataGrid = data
     //        headerTypes = [header types]
     //        keyRow = [key, unique info]
-    // OUTPUT: data = [ {header1: row1/1, header2: row1/2}, 
+    // OUTPUT: data = [ {header1: row1/1, header2: row1/2},
     //           {header1: row2/1, header2: row2/2}
     this.data = [];
     for (var i=0; i<dataGrid.length; i++) {
-	// rows
-	var tempRow = {};
-	for (var j=0; j<numColumns; j++) {
-	    // columns
-	    var header = this.headerNames[j];
-	    if ((headerTypes[j] === "ordinal" || 
-		 headerTypes[j] === "quantitative") && i<j) {
-		// make sure numbers are saved as numbers
-		tempRow[header] = +dataGrid[i][j];
-	    } else {
-		tempRow[header] = dataGrid[i][j];
-	    }
-	}
-	this.data.push(tempRow);
+  // rows
+  var tempRow = {};
+  for (var j=0; j<numColumns; j++) {
+      // columns
+      var header = this.headerNames[j];
+      if ((headerTypes[j] === "ordinal" ||
+     headerTypes[j] === "quantitative") && i<j) {
+    // make sure numbers are saved as numbers
+    tempRow[header] = +dataGrid[i][j];
+      } else {
+    tempRow[header] = dataGrid[i][j];
+      }
+  }
+  this.data.push(tempRow);
     }
     // add in metadata
     var tempRow1 = {}, tempRow2 = {};
     for (var j=0; j<numColumns; j++) {
-	var header = this.headerNames[j];
-	tempRow1[header] = headerTypes[j];
-	tempRow2[header] = keyRow[j];
+  var header = this.headerNames[j];
+  tempRow1[header] = headerTypes[j];
+  tempRow2[header] = keyRow[j];
     }
     this.data.push(tempRow1);
     this.data.push(tempRow2);
@@ -191,12 +191,12 @@ DataConverter.prototype.convert = function() {
     // find key: key in metadata[1]
     // find grouping column: categorical in metadata[0] and !key in metadata[1]
     for (var prop in metadata[0]) {
-	if (metadata[1][prop] === "key") {
-	    this.key = prop;
-	} else if (metadata[0][prop] === "categorical") {
-	    this.grouping = prop;
-	    metadata[1][prop] = "grouping";
-	}
+  if (metadata[1][prop] === "key") {
+      this.key = prop;
+  } else if (metadata[0][prop] === "categorical") {
+      this.grouping = prop;
+      metadata[1][prop] = "grouping";
+  }
     }
 
 console.log ("grouping: " + this.grouping);
@@ -204,100 +204,102 @@ console.log ("key: " + this.key);
 
     // Determine which dims to display
     var maxDims = 5,  // default max number of dimensions
-	numDims = 0;
+  numDims = 0;
     this.dims = [];
     for (var prop in metadata[0]) {
-	if (metadata[0][prop] === "ordinal" || 
-	    metadata[0][prop] === "quantitative") {
-	    this.dims.push(prop);
-	    numDims++;
-	    if (numDims == maxDims) { break; }
-	}
+  if (metadata[0][prop] === "ordinal" ||
+      metadata[0][prop] === "quantitative") {
+      this.dims.push(prop);
+      numDims++;
+      if (numDims == maxDims) { break; }
+  }
     }
 
 console.log ("dims: " + this.dims);
 
     // Create form for selecting dims
     var maxStrLen = 25;
-    var dimText = "<h3 id='dims'>Dimensions</h3>" + 
-	    "<p style='font-size:9pt; margin-left:8px;'>Columns: " + numColumns +
-	    "&nbsp; &nbsp;Rows: " + numRows;
+    var dimText = "<h3 id='dims'>Dimensions</h3>" +
+      "<p style='font-size:9pt; margin-left:8px;'>Columns: " + numColumns +
+      "&nbsp; &nbsp;Rows: " + numRows;
     var formText = dimText + "<form id='dimsForm'>";
     for (var i=0; i<numColumns; i++) {
-	var header = this.headerNames[i];
-	var id = "dim" + i;
-	var checked = (this.dims.indexOf(header) != -1)?"checked":"";
-	formText += "<p>&nbsp; <label><input class='dimsElement' " + 
-	    "type='checkbox' id='" + id + "' " + 
-	    checked + "/> " + 
-	    header.substr(0,maxStrLen) + 
-	    ((header.length>maxStrLen)?"...":"") + "</label>";
-	formText += "<span style='font-size:9pt;'> - " + 
-	    metadata[0][header] + "</span></p>";
-    }
+  var header = this.headerNames[i];
+  var id = "dim" + i;
+  var checked = (this.dims.indexOf(header) != -1)?"checked":"";
+  if (metadata[0][header] !== 'categorical') {
+    formText += "<p>&nbsp; <label><input class='dimsElement' " +
+        "type='checkbox' id='" + id + "' " +
+        checked + "/> " +
+        header.substr(0,maxStrLen) +
+        ((header.length>maxStrLen)?"...":"") + "</label>";
+    formText += "<span style='font-size:9pt;'> - " +
+        metadata[0][header] + "</span></p>";
+      }
+  }
 
     // add drop-down selector for key
     formText += "<p>&nbsp; </p><p><label>Key: <select class='dimsElement' id='key'>";
     for (var i=0; i<numColumns; i++) {
-	var header = this.headerNames[i];
-	var id = "key"+i;
-	formText += "<option value='" + id + "' id='" + id + "' " +
-	    ((metadata[1][header]==="key")?"selected":"") + ">"+ 
-	    header + "</option>";
+  var header = this.headerNames[i];
+  var id = "key"+i;
+  formText += "<option value='" + id + "' id='" + id + "' " +
+      ((metadata[1][header]==="key")?"selected":"") + ">"+
+      header + "</option>";
     }
     formText += "</select></label></p>";
 
     // add drop-down selector for grouping
     formText += "<p><label>Color: <select class='dimsElement' id='grouping'>";
     for (var i=0; i<numColumns; i++) {
-	var header = this.headerNames[i];
-	var id = "group"+i;
-	formText += "<option value='" + id + "' id='" + id + "' " + 
-	    ((metadata[1][header]==="grouping")?"selected":"") + ">" + 
-	    header + "</option>";
+  var header = this.headerNames[i];
+  var id = "group"+i;
+  formText += "<option value='" + id + "' id='" + id + "' " +
+      ((metadata[1][header]==="grouping")?"selected":"") + ">" +
+      header + "</option>";
     }
     formText += "</select></label></p></form>";
 
     this.descrip.html(formText);
 
     $(".dimsElement").change(this, function(evt) {
-	// sends 'this' to the function as evt.data
-	if (evt) {
-	    _gaq.push(['_trackEvent', 'Dims',evt.currentTarget.id ]);
-	};
-	updateDims(evt.data, evt.currentTarget.id);
+  // sends 'this' to the function as evt.data
+  if (evt) {
+      _gaq.push(['_trackEvent', 'Dims',evt.currentTarget.id ]);
+  };
+  updateDims(evt.data, evt.currentTarget.id);
     });
 
     this.draw();   // make sure the plot gets drawn
 };
 
 
-function updateDims (d, id) {    
+function updateDims (d, id) {
 //console.log ("updateDims> " + id);
 
 
     if (id == "key") {
-	// check key drop-down
-	var option = $('#key').val();   // returns key1, key2, ...
-	var ind = option.substring(3);  // strip off "key"
-	d.key = d.headerNames[ind];
+  // check key drop-down
+  var option = $('#key').val();   // returns key1, key2, ...
+  var ind = option.substring(3);  // strip off "key"
+  d.key = d.headerNames[ind];
     } else if (id == "grouping") {
-	// check grouping drop-down
-	var option = $('#grouping').val(); // returns group1, group2, ...
-	var ind = option.substring(5);     // strip off "group"
-	d.grouping = d.headerNames[ind];
+  // check grouping drop-down
+  var option = $('#grouping').val(); // returns group1, group2, ...
+  var ind = option.substring(5);     // strip off "group"
+  d.grouping = d.headerNames[ind];
     } else {
-	// check checkboxes
-	var numColumns = d.headerNames.length;
-	d.dims = [];
-	for (var i=0; i<numColumns; i++) {
-	    var id = "dim" + i;
-	    if ($('#'+id).attr('checked')) {
-		var header = d.headerNames[i];
-		d.dims.push(header);
-	    }
-	}
-    }	
+  // check checkboxes
+  var numColumns = d.headerNames.length;
+  d.dims = [];
+  for (var i=0; i<numColumns; i++) {
+      var id = "dim" + i;
+      if ($('#'+id).attr('checked')) {
+    var header = d.headerNames[i];
+    d.dims.push(header);
+      }
+  }
+    }
 
     d.draw();
 };
